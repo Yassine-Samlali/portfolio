@@ -77,6 +77,12 @@ nav {
     text-shadow: 0 0 10px var(--primary-color);
 }
 
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
 .theme-toggle {
     cursor: pointer;
     color: var(--text-color);
@@ -94,9 +100,6 @@ nav {
 .hamburg,
 .cancel {
     cursor: pointer;
-    position: absolute;
-    right: 15px;
-    top: 10px;
     color: var(--text-color);
     display: none;
     font-size: clamp(2.5rem, 0.5rem + 5vw, 3rem);
@@ -1011,8 +1014,15 @@ section:nth-child(even) {
         display: none;
     }
     
+    .nav-right {
+        position: absolute;
+        right: 15px;
+        top: 10px;
+    }
+    
     .theme-toggle {
-        display: none;
+        font-size: 1.2rem;
+        padding: 8px;
     }
     
     .hamburg,
