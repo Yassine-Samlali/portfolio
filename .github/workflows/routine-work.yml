@@ -1,0 +1,22 @@
+name: "Routine: Work"
+# @portable-routine: true
+# @portable-description: Working for the website
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:  # "Run Now" button
+
+jobs:
+  execute-routine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Portable Routine
+        uses: ./.github/actions/trigger-portable-routine
+        with:
+          routine_name: "Work"
+          prompt: "Check vulnerability and update code to look professional and add some blogs and news"
+          model: "sonnet"
+          permissions: "bypass_permissions"
+          webhook_secret: ${{ secrets.PORTABLE_WEBHOOK_SECRET }}
+          webhook_url: ${{ secrets.PORTABLE_WEBHOOK_URL }}
