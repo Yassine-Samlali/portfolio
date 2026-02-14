@@ -1,0 +1,82 @@
+name: 'Trigger Portable Routine'
+description: 'Triggers a Portable routine via webhook with JWT authentication'
+
+inputs:
+  routine_name:
+    description: 'Name of the routine'
+    required: true
+  prompt:
+    description: 'Prompt to send to Claude'
+    required: true
+  model:
+    description: 'Claude model to use'
+    required: false
+    default: 'sonnet'
+  permissions:
+    description: 'Permission mode'
+    required: false
+    default: 'bypass_permissions'
+  webhook_secret:
+    description: 'JWT token for webhook authentication (Bearer token)'
+    required: true
+  webhook_url:
+    description: 'Webhook URL for this repository'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Trigger Routine
+      shell: bash
+      env:
+        ROUTINE_NAME: ${{ inputs.routine_name }}
+        PROMPT: ${{ inputs.prompt }}
+        MODEL: ${{ inputs.model }}
+        PERMISSIONS: ${{ inputs.permissions }}
+        WEBHOOK_SECRET: ${{ inputs.webhook_secret }}
+        WEBHOOK_URL: ${{ inputs.webhook_url }}
+        EVENT_NAME: ${{ github.event_name }}
+        RUN_ID: ${{ github.run_id }}
+        RUN_NUMBER: ${{ github.run_number }}
+        ACTOR: ${{ github.actor }}
+        REF: ${{ github.ref }}
+        SHA: ${{ github.sha }}
+        WORKFLOW: ${{ github.workflow }}
+      run: |
+        # Build JSON payload
+        PAYLOAD=$(cat <<EOF
+        {
+          "routine_id": "$WORKFLOW",
+          "routine_name": "$ROUTINE_NAME",
+          "prompt": "$PROMPT",
+          "model": "$MODEL",
+          "permissions": "$PERMISSIONS",
+          "trigger_context": {
+            "event": "$EVENT_NAME",
+            "workflow_run_id": "$RUN_ID",
+            "workflow_run_number": "$RUN_NUMBER",
+            "actor": "$ACTOR",
+            "ref": "$REF",
+            "sha": "$SHA"
+          }
+        }
+        EOF
+        )
+
+        # Send webhook with JWT Bearer token authentication
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$WEBHOOK_URL" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $WEBHOOK_SECRET" \
+          -d "$PAYLOAD")
+
+        HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+        BODY=$(echo "$RESPONSE" | sed '$d')
+
+        if [ "$HTTP_CODE" -ne 200 ]; then
+          echo "❌ Webhook failed with status $HTTP_CODE"
+          echo "$BODY"
+          exit 1
+        fi
+
+        echo "✅ Routine triggered successfully"
+        echo "$BODY"
